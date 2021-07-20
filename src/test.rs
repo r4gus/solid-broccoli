@@ -48,3 +48,10 @@ fn login_succeeds() {
     assert!(login(&client, "admin@admin.com", "secret").is_some());
 }
 
+/*
+#[test]
+fn login_logout() {
+    let client = Client::tracked(rocket()).unwrap();
+    let session_cookie = login(&client, "admin@admin.com", "secret");
+}
+*/

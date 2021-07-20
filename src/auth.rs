@@ -64,6 +64,7 @@ pub async fn login(form: Form<Strict<LoginForm<'_>>>, cookies: &CookieJar<'_>, c
         .get_result(c)
     }).await;
     
+    // If 
     match user {
         Ok(u) => {
             if !u.verified {
@@ -79,7 +80,7 @@ pub async fn login(form: Form<Strict<LoginForm<'_>>>, cookies: &CookieJar<'_>, c
                         cookies.add_private(
                             Cookie::new(super::USER_SESSION_NAME, format!("{}", u.id)));
                         return Flash::success(
-                            Redirect::to(uri!(login)), "Login successful");
+                            Redirect::to(uri!(super::app::dashboard)), "Login successful");
                     } else { // invalid password
                         return Flash::warning(Redirect::to(uri!(login)), 
                                               "Invalid username or password");
