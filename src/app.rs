@@ -14,3 +14,8 @@ pub fn dashboard(user: &User, flash: Option<FlashMessage<'_>>) -> Result<Templat
 
     Ok(Template::render("dashboard", &context))
 }
+
+#[get("/dashboard", rank = 2)]
+pub fn dashboard_forward() -> Flash<Redirect> {
+   Flash::warning(Redirect::to(uri!(super::auth::login)), "Please sign in")
+}

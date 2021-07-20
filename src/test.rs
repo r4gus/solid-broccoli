@@ -2,6 +2,7 @@ use super::rocket;
 use rocket::local::blocking::{Client, LocalResponse};
 use rocket::http::{Status, Cookie, ContentType};
 use super::auth;
+use super::app;
 
 /// Fetch a session cookie from the given response.
 /// The function will return a session cookie on success and `None` otherwise.
@@ -48,10 +49,26 @@ fn login_succeeds() {
     assert!(login(&client, "admin@admin.com", "secret").is_some());
 }
 
-/*
 #[test]
 fn login_logout() {
     let client = Client::tracked(rocket()).unwrap();
-    let session_cookie = login(&client, "admin@admin.com", "secret");
+    let session_cookie = login(&client, "admin@admin.com", "secret").expect("logged in");
+
+    // Ensure we're logged in
+    let response = client.get(uri!(app::dashboard)).cookie(session_cookie.clone()).dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    
+    // Logout
+    let response = client.get(uri!(auth::logout)).cookie(session_cookie).dispatch();
+    let cookie =  user_id_cookie(&response).expect("logout cookie");
+    assert!(cookie.value().is_empty());
+
+    // The user should be redirected to the login page
+    assert_eq!(response.status(), Status::SeeOther);
+    assert_eq!(response.headers().get_one("Location").unwrap(), &uri!(auth::login));
+    
+    // Try to access the dashboard without being logged in
+    let response = client.get(uri!(app::dashboard)).cookie(cookie.clone()).dispatch();
+    assert_eq!(response.status(), Status::SeeOther);
+    assert_eq!(response.headers().get_one("Location").unwrap(), &uri!(auth::login));
 }
-*/

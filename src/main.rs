@@ -85,7 +85,8 @@ async fn run_migrations(rocket: Rocket<Build>) -> Rocket<Build> {
 #[launch]
 fn rocket() -> _ {
     rocket::build()
-        .mount("/", routes![auth::login_page, auth::login, auth::logout, app::dashboard])
+        .mount("/", routes![auth::login_page, auth::login, auth::logout, 
+               app::dashboard, app::dashboard_forward])
         // Serve static files relative to the crates root.
         .mount("/static", FileServer::from(relative!("static")))
         // Allow templates as return type

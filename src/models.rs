@@ -27,17 +27,34 @@ pub struct User {
     pub verified: bool,
 }
 
+/// User request guard implementation.
+///
+/// One can use `user: &User` as a request guard. The request guard will either
+/// provide a reference to the logged in `User` or forward the request.
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for &'r User {
+    // This trait implementation requires the `rocket::outcome::IntoOutcome` trait
+    // to be into scope.
+
     type Error = std::convert::Infallible;
 
     async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+        // We store the user within a local cache. The following closure will execute
+        // at most once per request, regardless of the number of times the `User` guard
+        // is executed.
         let user_result = request.local_cache_async(async {
-            let db = request.guard::<Db>().await.succeeded().unwrap();
+            // Use the `Db` request guard to get access to the database. Failures are
+            // yielded to the calling function.
+            let db = request.guard::<Db>().await.succeeded()?;
+
+            // Retrieve the `User` id from the specified session cookie. The cookie must be
+            // present otherwise `None` is returned. We need to specify the type of `id`,
+            // otherwise the following `if let` expression cant infer it.
             let id: Option<i32> = request.cookies()
                 .get_private(super::USER_SESSION_NAME)
                 .and_then(|cookie| cookie.value().parse().ok());
-
+            
+            // Fetch the user with the given `id` from the database.
             if let Some(id) = id {
                 db.run(move |c| {
                     users::table
@@ -49,6 +66,9 @@ impl<'r> FromRequest<'r> for &'r User {
             }
         }).await;
         
+        // Transform the given `&Option<User>` into an `Option<&User>`.
+        // Then convert `Option<&User> into an `Outcome::Success` if its `Some`
+        // or an `Outcome::Forward` otherwise.
         user_result.as_ref().or_forward(())
     }
 }
