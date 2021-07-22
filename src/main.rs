@@ -2,6 +2,7 @@
 #[macro_use] extern crate rocket_sync_db_pools;
 #[macro_use] extern crate diesel_migrations;
 #[macro_use] extern crate diesel;
+#[macro_use] extern crate regex;
 
 #[cfg(test)] mod test;
 
@@ -10,6 +11,7 @@ mod schema;
 mod models;
 mod context;
 mod app;
+mod api;
 
 use rocket::{
     Rocket, Build,
@@ -52,24 +54,8 @@ async fn run_migrations(rocket: Rocket<Build>) -> Rocket<Build> {
     let pw = std::env::var("ADMIN_PWD");
 
     if pw.is_ok() && mail.is_ok() {
-        let admin = models::NewUser {
-            email: mail.unwrap(),
-            password_hash: argon2::hash_encoded(
-                pw.unwrap().as_ref(), 
-                auth::generate_salt(15).as_ref(), 
-                &argon2::Config::default()).unwrap(),
-            first_name: "".to_string(),
-            last_name: "".to_string(),
-            street: "".to_string(),
-            house_number: "".to_string(),
-            zip: "".to_string(),
-            city: "".to_string(),
-            phone: "".to_string(),
-            img_path: "".to_string(),
-            is_admin: true,
-            verified: true,
-        };
-
+        let admin = models::NewUser::new(
+            "admin", mail.unwrap().as_ref(), pw.unwrap().as_ref(), true, true); 
         if let Err(e) = conn.run(move |c| {
             diesel::insert_into(users::table)
                 .values(admin)
@@ -87,6 +73,7 @@ fn rocket() -> _ {
     rocket::build()
         .mount("/", routes![auth::login_page, auth::login, auth::logout, 
                app::dashboard, app::dashboard_forward])
+        .mount("/api/user", routes![api::user::update_user])
         // Serve static files relative to the crates root.
         .mount("/static", FileServer::from(relative!("static")))
         // Allow templates as return type

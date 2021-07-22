@@ -9,10 +9,12 @@ use rocket::{
 };
 use crate::schema::*;
 use super::Db;
+use super::auth;
 
 #[derive(Queryable, Serialize)]
 pub struct User {
     pub id: i32,
+    pub username: String,
     pub email: String,
     pub password_hash: String,
     pub first_name: String,
@@ -76,6 +78,7 @@ impl<'r> FromRequest<'r> for &'r User {
 #[derive(Insertable)]
 #[table_name="users"]
 pub struct NewUser {
+    pub username: String,
     pub email: String,
     pub password_hash: String,
     pub first_name: String,
@@ -88,4 +91,27 @@ pub struct NewUser {
     pub img_path: String,
     pub is_admin: bool,
     pub verified: bool,
+}
+
+impl NewUser {
+    pub fn new(username: &str, email: &str, password: &[u8], is_admin: bool, verified: bool) -> NewUser {
+        NewUser {
+            username: username.to_string(),
+            email: email.to_string(),
+            password_hash: argon2::hash_encoded(
+                password, 
+                auth::generate_salt(15).as_ref(), 
+                &argon2::Config::default()).unwrap(),
+            first_name: "".to_string(),
+            last_name: "".to_string(),
+            street: "".to_string(),
+            house_number: "".to_string(),
+            zip: "".to_string(),
+            city: "".to_string(),
+            phone: "".to_string(),
+            img_path: "".to_string(),
+            is_admin: is_admin,
+            verified: verified,
+        }
+    }
 }

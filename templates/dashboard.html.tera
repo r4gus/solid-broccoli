@@ -2,11 +2,45 @@
 {% block title %}Dashboard{% endblock title %}
 {% block content %}
 <div class="py-4">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+      <div class="container-fluid">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo03" aria-controls="navbarTogglerDemo03" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <a class="navbar-brand" href="/dashboard">On Track</a>
+        <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link" href="#">Link</a>
+            </li>
+          </ul>
+          <div class="d-flex">
+            {% if user %} 
+            <div class="dropdown">
+              <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                <img src="#" alt="" class="rounded-circle me-2" width="32" height="32">
+                <strong>{{ user.username }}</strong>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1" style="">
+                <li><a href="#" class="dropdown-item" data-bs-toggle="offcanvas"data-bs-target="#offcanvasProfile" aria-controls="offcanvasProfile">Profile</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="/logout">Sign out</a></li>
+              </ul>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!--
     <header class="pb-3 mb-4 border-bottom">
-      <a href="/" class="d-flex align-items-center text-dark text-decoration-none">
+      <a href="/dashboard" class="d-flex align-items-center text-dark text-decoration-none">
         <span class="fs-4">Lift Up</span>
       </a>
+
     </header>
+    -->
 
     {% if flash %}
         <div class="alert alert-{{ flash.0 }}" role="alert">
@@ -43,4 +77,44 @@
       © 2021
     </footer>
   </div>
+
+{% if user %}
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasProfile" aria-labelledby="offcanvasProfile">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="offcanvasWithBackdropLabel">Profile <a href="#" id="editProfile">edit</a></h5>
+    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <p id="resultProfile"></p>
+    <form action="/api/user/update/{{ user.id }}" method="post" id="profileForm">
+        <div class="input-group mb-2">
+          <span class="input-group-text">Username</span>
+          <input type="text" name="username" aria-label="Username"
+                 class="form-control" value="{{ user.username }}" required disabled>
+        </div>
+        <div class="input-group mb-2">
+          <span class="input-group-text">E-Mail</span>
+          <input type="text" name="email" aria-label="email"
+                 class="form-control" value="{{ user.email }}" required disabled>
+        </div>
+        <div class="input-group mb-2">
+          <span class="input-group-text">First name</span>
+          <input type="text" name="first_name" aria-label="First name" class="form-control" 
+                 value="{{ user.first_name }}" disabled>
+        </div>
+        <div class="input-group mb-2">
+          <span class="input-group-text">Last name</span>
+          <input type="text" name="last_name" aria-label="Last name" class="form-control" 
+                 value="{{ user.last_name }}" disabled>
+        </div>
+        <button type="submit" class="btn btn-primary" hidden>Update</button>
+    </form>
+    <hr>
+    <form action="/api/user/update/{{ user.id }}" method="post" id="passwordForm">
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<script src="static/js/user.js"></script>
 {% endblock %}

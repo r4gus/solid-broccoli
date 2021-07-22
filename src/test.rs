@@ -1,8 +1,62 @@
 use super::rocket;
 use rocket::local::blocking::{Client, LocalResponse};
-use rocket::http::{Status, Cookie, ContentType};
+use rocket::http::{Status, Cookie, ContentType, uri::Origin};
 use super::auth;
 use super::app;
+use super::api;
+use dotenv::dotenv;
+use std::panic;
+
+use rocket_sync_db_pools::diesel;
+use self::diesel::{prelude::*, PgConnection, QueryResult};
+use crate::models::*;
+use crate::schema::*;
+use crate::Db;
+
+fn establish_connection() -> PgConnection {
+    dotenv().ok();
+
+    let database_url = std::env::var("DATABASE_URL")
+        .expect("DATABASE_URL must be set");
+    PgConnection::establish(&database_url)
+        .expect(&format!("Error connecting to {}", database_url))
+}
+
+fn insert_test_user(conn: &PgConnection, user: &NewUser) -> User {
+    diesel::insert_into(users::table)
+                .values(user)
+                .get_result(conn)
+                .expect("Insert test user")
+}
+
+fn delete_test_user(conn: &PgConnection, user: &User) {
+    diesel::delete(users::table.filter(users::id.eq(user.id))).execute(conn);
+}
+
+fn get_test_user(conn: &PgConnection, id: i32) -> User {
+    users::table.filter(users::id.eq(id)).get_result(conn).expect("Load test user")
+}
+
+fn setup() {
+
+}
+
+fn teardown() {
+    // Purge database
+    let conn = establish_connection();
+    diesel::delete(users::table).execute(&conn);
+}
+
+fn run_test<T>(test: T) -> ()
+    where T: FnOnce() -> () + panic::UnwindSafe
+{
+    setup();
+    let result = panic::catch_unwind(|| {
+        test()
+    });
+    teardown();
+    assert!(result.is_ok())
+}
 
 /// Fetch a session cookie from the given response.
 /// The function will return a session cookie on success and `None` otherwise.
@@ -72,3 +126,81 @@ fn login_logout() {
     assert_eq!(response.status(), Status::SeeOther);
     assert_eq!(response.headers().get_one("Location").unwrap(), &uri!(auth::login));
 }
+
+fn post_req<'a>(client: &'a Client, payload: &'a str, url: Origin<'a>) -> LocalResponse<'a> {
+    client.post(url)
+        .header(ContentType::Form)
+        .body(payload)
+        .dispatch()
+}
+
+#[test]
+fn user_profile_update() {
+    run_test(|| {
+        let rocket = rocket();
+        let conn = establish_connection();
+
+        let max = NewUser::new("maxi", "max@mustermann.de", b"secret", false, true);
+
+        let max: User = insert_test_user(&conn, &max);
+
+        let client = Client::tracked(rocket).unwrap();
+        
+        // Try to make an unauthorized request
+        let f = format!("username={}&email={}&first_name={}&last_name={}", &max.username, &max.email, "Max", "Mustermann");
+        let response = post_req(&client, &f, uri!("/api/user/", api::user::update_user(max.id)));
+        assert_eq!(response.status(), Status::NotFound);
+        
+        // Login and try to update another user without permission
+        let session_cookie = login(&client, &max.email, "secret").expect("logged in");
+        let response = client.post(uri!("/api/user", api::user::update_user(id = max.id + 1)))
+            .header(ContentType::Form)
+            .body(&f)
+            .cookie(session_cookie.clone())
+            .dispatch();
+        let strresp = response.into_string().unwrap();
+        assert!(strresp.contains("Unauthorized request"));
+
+        // Try to insert a malformed email address
+        let response = client.post(uri!("/api/user", api::user::update_user(id = max.id)))
+            .header(ContentType::Form)
+            .body(format!("username={}&email={}&first_name={}&last_name={}", &max.username, "max.com", "Max", "Mustermann"))
+            .cookie(session_cookie.clone())
+            .dispatch();
+        let strresp = response.into_string().unwrap();
+        assert!(strresp.contains("Invalid email"));
+
+        // Try to submit a empty username
+        let response = client.post(uri!("/api/user", api::user::update_user(id = max.id)))
+            .header(ContentType::Form)
+            .body(format!("username={}&email={}&first_name={}&last_name={}", "", "max@mustermann.de", "Max", "Mustermann"))
+            .cookie(session_cookie.clone())
+            .dispatch();
+        let strresp = response.into_string().unwrap();
+        assert!(strresp.contains("Invalid username"));
+
+        // Finaly update profile
+        let response = client.post(uri!("/api/user", api::user::update_user(id = max.id)))
+            .header(ContentType::Form)
+            .body(&f)
+            .cookie(session_cookie.clone())
+            .dispatch();
+        let strresp = response.into_string().unwrap();
+        assert!(strresp.contains("User profile successfully updated"));
+
+        let max = get_test_user(&conn, max.id);
+
+        assert_eq!("Max", &max.first_name);
+        assert_eq!("Mustermann", &max.last_name);
+    })
+}
+
+
+
+
+
+
+
+
+
+

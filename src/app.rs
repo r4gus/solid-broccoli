@@ -6,7 +6,7 @@ use crate::models::User;
 
 #[get("/dashboard")]
 pub fn dashboard(user: &User, flash: Option<FlashMessage<'_>>) -> Result<Template, Flash<Redirect>> {
-    let mut context = Context::new();
+    let mut context = Context::from_user(user);
 
     if let Some(ref f) = flash {
         context.parse_flash(f); 
