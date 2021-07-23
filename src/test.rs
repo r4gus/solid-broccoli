@@ -6,6 +6,7 @@ use super::app;
 use super::api;
 use dotenv::dotenv;
 use std::panic;
+use regex::Regex;
 
 use rocket_sync_db_pools::diesel;
 use self::diesel::{prelude::*, PgConnection, QueryResult};
@@ -195,10 +196,70 @@ fn user_profile_update() {
     })
 }
 
+#[test]
+fn update_password() {
+    run_test(|| {
+        let conn = establish_connection();
+        let max = NewUser::new("maxi", "max@mustermann.de", b"secret", false, true);
+        let max: User = insert_test_user(&conn, &max);
 
+        let client = Client::tracked(rocket()).unwrap();
 
+        // Try to make an unauthorized request
+        let f = format!("password1={}&password2={}&old={}", "hic", "hic", "secret");
+        let response = 
+            post_req(&client, &f, uri!("/api/user/", api::user::update_user_pw(max.id)));
+        assert_eq!(response.status(), Status::NotFound);
 
+        // Login and try to update with two passwords that don't match
+        let session_cookie = login(&client, &max.email, "secret").expect("logged in");
+        let response = client.post(uri!("/api/user", api::user::update_user_pw(id = max.id)))
+            .header(ContentType::Form)
+            .body(format!("password1={}&password2={}&old={}", "hicrhodos", "hicsalta", "secret"))
+            .cookie(session_cookie.clone())
+            .dispatch();
+        let strresp = response.into_string().unwrap();
+        assert!(strresp.contains("Passwords don't match"));
 
+        // Password is too short
+        let response = client.post(uri!("/api/user", api::user::update_user_pw(id = max.id)))
+            .header(ContentType::Form)
+            .body(&f)
+            .cookie(session_cookie.clone())
+            .dispatch();
+        let strresp = response.into_string().unwrap();
+        assert!(strresp.contains("Password too short"));
+
+        // Old password incorrect
+        let response = client.post(uri!("/api/user", api::user::update_user_pw(id = max.id)))
+            .header(ContentType::Form)
+            .body(format!("password1={}&password2={}&old={}", "hicrhodos", "hicrhodos", "seCret"))
+            .cookie(session_cookie.clone())
+            .dispatch();
+        let strresp = response.into_string().unwrap();
+        assert!(strresp.contains("Unauthorized request"));
+
+        // Update password
+        let response = client.post(uri!("/api/user", api::user::update_user_pw(id = max.id)))
+            .header(ContentType::Form)
+            .body(format!("password1={}&password2={}&old={}", "hicrhodos", "hicrhodos", "secret"))
+            .cookie(session_cookie.clone())
+            .dispatch();
+        let strresp = response.into_string().unwrap();
+        assert!(strresp.contains("Password successfully updated"));
+
+        // Logout
+        let response = client.get(uri!(auth::logout)).cookie(session_cookie).dispatch();
+        let cookie =  user_id_cookie(&response).expect("logout cookie");
+        assert!(cookie.value().is_empty());
+
+        // Try to login with old password
+        assert!(login(&client, &max.email, "secret").is_none());
+
+        // Try to login with new password
+        assert!(login(&client, &max.email, "hicrhodos").is_some());
+    })
+}
 
 
 
