@@ -3,6 +3,9 @@ use rocket::serde::{Deserialize, Serialize, json::{Json, json, Value}};
 use regex::Regex;
 use argon2;
 use crate::auth::generate_salt;
+use rocket::response::{Flash, Redirect};
+use crate::USER_SESSION_NAME;
+use rocket::http::{Cookie, CookieJar};
 
 use rocket_sync_db_pools::diesel;
 use self::diesel::{prelude::*, PgConnection, QueryResult};
@@ -70,6 +73,7 @@ pub async fn update_user(user: &User, id: i32, form: Form<Strict<UserUpdateForm<
     } 
 }
 
+/// Update the password of an user.
 #[post("/update/password/<id>", data = "<form>")]
 pub async fn update_user_pw(user: &User, id: i32, form: Form<Strict<UserUpdatePwForm<'_>>>, conn: Db) -> Value {
     const PW_MIN_SIZE: usize = 5;
@@ -93,12 +97,14 @@ pub async fn update_user_pw(user: &User, id: i32, form: Form<Strict<UserUpdatePw
             "message": format!("Password too short. At least {} chars required", PW_MIN_SIZE)
         })
     } else {
+        // Generate new salted password hash from submitted password.
         let password_hash = argon2::hash_encoded(
             form.password1.as_ref(),
             generate_salt(15).as_ref(),
             &argon2::Config::default()
             ).unwrap();
-
+        
+        // Store new password hash
         let result: QueryResult<usize> = conn.run(move |c| {
             let target = users::table.filter(users::id.eq(id));
             diesel::update(target).set((
@@ -109,6 +115,25 @@ pub async fn update_user_pw(user: &User, id: i32, form: Form<Strict<UserUpdatePw
         match result {
             Ok(_) => json!({"status": "ok", "message": "Password successfully updated"}),
             Err(e) => json!({"status": "error", "message": e.to_string()})
+        }
+    }
+}
+
+#[post("/delete/<id>")]
+pub async fn delete_user(user: &User, id: i32, conn: Db, cookies: &CookieJar<'_>) -> Result<Flash<Redirect>, Value> {
+
+    if (id != user.id) {
+        Err(json!({"status": "error", "message": "Unauthorized request"}))
+    } else {
+        match conn.run(move |c| {
+            diesel::delete(users::table.filter(users::id.eq(id))).execute(c)
+        }).await {
+            Ok(_) => {
+                cookies.remove_private(Cookie::named(USER_SESSION_NAME));
+                Ok(Flash::success(Redirect::to(uri!(crate::auth::login)),
+                        "Account successfully delted"))
+            },
+            Err(e) => Err(json!({"status": "error", "message": e.to_string()}))
         }
     }
 }

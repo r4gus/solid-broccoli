@@ -261,7 +261,36 @@ fn update_password() {
     })
 }
 
+#[test]
+fn delete_user() {
+    run_test(|| {
+        let conn = establish_connection();
+        let max = NewUser::new("maxi", "max@mustermann.de", b"secret", false, true);
+        let max: User = insert_test_user(&conn, &max);
 
+        let client = Client::tracked(rocket()).unwrap();
+
+        // Try to delet account without beeing authorized
+        let response = client.post(uri!("/api/user", api::user::delete_user(id = max.id)))
+            .dispatch();
+        assert_eq!(response.status(), Status::NotFound);
+
+        // Login and try to delte different user
+        let session_cookie = login(&client, &max.email, "secret").expect("logged in");
+        let response = client.post(uri!("/api/user", api::user::delete_user(id = max.id + 1)))
+            .cookie(session_cookie.clone())
+            .dispatch();
+        let strresp = response.into_string().unwrap();
+        assert!(strresp.contains("Unauthorized request"));
+
+        // Delte own account
+        let response = client.post(uri!("/api/user", api::user::delete_user(id = max.id)))
+            .cookie(session_cookie.clone())
+            .dispatch();
+        assert_eq!(response.status(), Status::SeeOther);
+        assert_eq!(response.headers().get_one("Location").expect("Location"), &uri!(auth::login));
+    })
+}
 
 
 

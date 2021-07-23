@@ -1,18 +1,5 @@
 $( document ).ready( () => {
     
-    $( "#editProfile" ).click(function( event ) {
-
-        if ($( "#profileForm" ).find(':input').prop('disabled')) {
-            $( "#profileForm" ).find(':input').prop('disabled', false);
-            $( "#profileForm button" ).prop('hidden', false);
-            $( this ).text("abort");
-        } else {
-            $( "#profileForm" ).find(':input').prop('disabled', true);
-            $( "#profileForm button" ).prop('hidden', true);
-            $( this ).text("edit");
-        }
-    });
-
     $( "#profileForm" ).submit(function( event ) {
 
         // Prevent the form from submitting
@@ -44,9 +31,6 @@ $( document ).ready( () => {
             dataType : "json",
         }).done( (json) => {
             console.log(json);
-            $( "#profileForm" ).find(':input').prop('disabled', true);
-            $( "#profileForm" ).find( 'button' ).prop('hidden', true);
-            $( "#editProfile" ).text("edit");
 
             if (json['status'] === 'ok') {
                 $result.css("color", "green");
@@ -59,6 +43,58 @@ $( document ).ready( () => {
             $result.css("color", "red");
         })
     });
+
+    $( "#passwordForm").submit(function( event ) {
+        // Prevent the form from submitting
+        event.preventDefault();
+        
+        // Cache form for reuse
+        let $form = $(this);
+
+        // Paragraph to show result message
+        const $result = $("#resultProfile");
+
+        $.ajax({
+            // The URL fro the request
+            url : $form.prop('action'),
+
+            // The data to send
+            data : $form.serialize(),
+
+            type : $form.prop('method'),
+
+            dataType : "json",
+        }).done( (json) => {
+            console.log(json);
+
+            if (json['status'] === 'ok') {
+                $result.css("color", "green");
+            } else {
+                $result.css("color", "red");
+            }
+            $result.text(json['message']);
+        }).fail( (xhr, status, error) => {
+            $result.text("Ooops... something went wrong");
+            $result.css("color", "red");
+        })
+    });
+
+    $( "#delteConfirmation" ).on("input", function() {
+        const val = $( this ).val();
+        const expected = $( this ).prop('placeholder');
+        const $button = $( "#deleteUserBtn" );
+
+        console.log(val + " == " + expected);
+        
+        if (val === expected) {
+            $button.prop('disabled', false);
+        } else {
+            $button.prop('disabled', true);
+        }
+
+        console.log($button.prop('disabled'));
+    });
+
 });
 
 function validateEmail(email) {
