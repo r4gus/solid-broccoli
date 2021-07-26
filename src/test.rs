@@ -87,7 +87,7 @@ fn view_login_page() {
     let client = Client::tracked(rocket()).expect("valid rocket instance");
     let mut response = client.get("/login").dispatch();
     assert_eq!(response.status(), Status::Ok);
-    assert!(response.into_string().unwrap().contains("sign in"));
+    assert!(response.into_string().unwrap().contains("Sign In"));
 }
 
 #[test]
@@ -292,5 +292,65 @@ fn delete_user() {
     })
 }
 
+#[test]
+fn sign_up_test() {
+    run_test(|| {
+        let conn = establish_connection();
+        let max = NewUser::new("maxi", "max@mustermann.de", b"secret", false, true);
+        let max: User = insert_test_user(&conn, &max);
+        let client = Client::tracked(rocket()).unwrap();
 
+        // A unique email address is required
+        let response = client.post(uri!(auth::signup))
+            .header(ContentType::Form)
+            .body(format!("email={}&username={}&password1={}&password2={}",
+                          "max@mustermann.de", "r4gus", "franzi", "franzi"))
+            .dispatch();
+        let strresp = response.headers().get_one("set-cookie").expect("set-cookie").to_string();
+        assert!(strresp.contains("Email%20address%20already%20taken"));
+
+        // A unique username is required
+        let response = client.post(uri!(auth::signup))
+            .header(ContentType::Form)
+            .body(format!("email={}&username={}&password1={}&password2={}",
+                          "david@example.com", "maxi", "franzi", "franzi"))
+            .dispatch();
+        let strresp = response.headers().get_one("set-cookie").expect("set-cookie").to_string();
+        assert!(strresp.contains("Username%20already%20taken"));
+        
+        // The email address must be valid
+        let response = client.post(uri!(auth::signup))
+            .header(ContentType::Form)
+            .body(format!("email={}&username={}&password1={}&password2={}",
+                          "david.de", "r4gus", "franzi", "franzi"))
+            .dispatch();
+        let strresp = response.headers().get_one("set-cookie").expect("set-cookie").to_string();
+        assert!(strresp.contains("Malformed%20email%20address"));
+
+        // Passords must match
+        let response = client.post(uri!(auth::signup))
+            .header(ContentType::Form)
+            .body(format!("email={}&username={}&password1={}&password2={}",
+                          "david@example.com", "r4gus", "dranzi", "franzi"))
+            .dispatch();
+        let strresp = response.headers().get_one("set-cookie").expect("set-cookie").to_string();
+        assert!(strresp.contains("Passwords%20do%20not%20match"));
+
+        // Insert a new user successfully
+        let response = client.post(uri!(auth::signup))
+            .header(ContentType::Form)
+            .body(format!("email={}&username={}&password1={}&password2={}",
+                          "david@example.de", "r4gus", "franzi", "franzi"))
+            .dispatch();
+        let strresp = response.headers().get_one("set-cookie").expect("set-cookie").to_string();
+        assert!(strresp.contains("Account%20successfully%20created"));
+
+
+        let david: User = users::table.filter(users::username.eq("r4gus"))
+            .get_result(&conn).expect("Load created user");
+
+        assert_eq!("r4gus", david.username);
+        assert_eq!("david@example.de", david.email);
+    })
+}
 

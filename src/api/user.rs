@@ -2,7 +2,7 @@ use rocket::form::{Form, Strict};
 use rocket::serde::{Deserialize, Serialize, json::{Json, json, Value}};
 use regex::Regex;
 use argon2;
-use crate::auth::generate_salt;
+use crate::auth::{generate_salt, validate_email};
 use rocket::response::{Flash, Redirect};
 use crate::USER_SESSION_NAME;
 use rocket::http::{Cookie, CookieJar};
@@ -35,11 +35,6 @@ pub struct UserUpdatePwForm<'a> {
 /// and a `message`.
 #[post("/update/<id>", data = "<form>")]
 pub async fn update_user(user: &User, id: i32, form: Form<Strict<UserUpdateForm<'_>>>, conn: Db) -> Value {
-    println!("{:?}", form); 
-
-    let email_regex = Regex::new(
-        r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})"
-    ).unwrap();
 
     // Only update the user profile if the submitted email is well formed and
     // the id matches the signed up users id.
@@ -47,7 +42,7 @@ pub async fn update_user(user: &User, id: i32, form: Form<Strict<UserUpdateForm<
         json!({"status": "error", "message": "Unauthorized request"})
     } else if (form.username.len() < 1) {
         json!({"status": "error", "message": "Invalid username"})
-    } else if (!email_regex.is_match(form.email)) {
+    } else if (!validate_email(form.email)) {
         json!({"status": "error", "message": "Invalid email"})
     } else {
         let username = form.username.to_string();

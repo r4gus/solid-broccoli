@@ -1,0 +1,50 @@
+{% extends "base" %}
+{% block title %}Sign Up{% endblock title %}
+{% block head %}
+    {{ super() }}
+    <link href="/static/css/login.css" rel="stylesheet">
+{% endblock head %}
+{% block content %}
+    <main class="text-center form-signup">
+        <form action="/signup" method="post" id="signupForm">
+            <img class="mb-4" src="/docs/5.0/assets/brand/bootstrap-logo.svg" 
+                alt="" width="72" height="57">
+            <h1 class="h3 mb-3 fw-normal">Sign Up</h1>
+
+            {% if flash %}
+                <div class="mt-3 alert alert-{{ flash.0 }}" role="alert">
+                    {{ flash.1 }}
+                </div>
+            {% endif %}
+
+            <div class="form-floating mb-2">
+                <input type="email" name="email" class="form-control" id="floatingInput" 
+                    placeholder="name@example.com" style="" autocomplete="off" required>
+                <label for="floatingInput">Email address</label>
+            </div>
+            <div class="form-floating mb-2">
+                <input type="text" name="username" class="form-control" id="username" 
+                    placeholder="username" style="" autocomplete="off" required>
+                <label for="floatingInput2">Username</label>
+                <div clas="valid-feedback" id="usernameFeedback"></div>
+            </div>
+            <div class="form-floating mb-2">
+                <input type="password" name="password1" class="form-control" id="floatingPassword1" 
+                    placeholder="Password" style="" autocomplete="off" required>
+                <label for="floatingPassword1">Password</label>
+            </div>
+            <div class="form-floating mb-4">
+                <input type="password" name="password2" class="form-control" id="floatingPassword2" 
+                    placeholder="Repeat Password" style="" autocomplete="off" required>
+                <label for="floatingPassword2">Repeat password</label>
+            </div>
+
+            <button class="w-100 btn btn-lg btn-primary" type="submit">Sign Up</button>
+
+
+            <p class="mt-5 mb-3 text-muted">© 2021</p>
+        </form>     
+    </main>
+
+<script src="static/js/signup.js"></script>
+{% endblock content %}

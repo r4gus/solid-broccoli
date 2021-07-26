@@ -6,6 +6,9 @@ use std::collections::HashMap;
 use rocket::form::{Form, Strict};
 use argon2;
 use super::Db;
+use regex::Regex;
+use crate::models::NewUser;
+use rocket::serde::{Deserialize, Serialize, json::{Json, json, Value}};
 
 use rocket_sync_db_pools::diesel;
 use self::diesel::{prelude::*, PgConnection, QueryResult};
@@ -35,22 +38,115 @@ pub fn generate_salt(len: usize) -> String {
     salt
 }
 
+/// Validate that the given email address is not malformed.
+pub fn validate_email(email: &str) -> bool {
+    let email_regex = Regex::new(
+        r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})"
+    ).unwrap();
+
+    email_regex.is_match(email)
+}
+
+/// Check if the given email address is valid and not already taken.
+async fn check_email(email: String, conn: &Db) -> Result<(), String> {
+    let cpy = email.clone();
+
+    let taken: bool = conn.run(move |c| {
+        users::table
+            .filter(users::email.eq(email))
+            .get_result::<User>(c)
+    }).await.is_ok();
+
+    if (!validate_email(&cpy)) {
+        Err(String::from("Malformed email address"))
+    } else if (taken) {
+        Err(String::from("Email address already taken"))
+    } else {
+        Ok(())
+    }
+}
+
+/// Check if the given username is not already taken.
+async fn check_username(username: String, conn: &Db) -> bool {
+    let taken: bool = conn.run(move |c| {
+        users::table
+            .filter(users::username.eq(username))
+            .get_result::<User>(c)
+    }).await.is_ok();
+
+    return taken;
+}
+
 #[derive(Debug, FromForm)]
 pub struct LoginForm<'r> {
     email: &'r str,
     password: &'r str,
 }
 
+#[derive(Debug, FromForm)]
+pub struct SignupForm<'r> {
+    email: &'r str,
+    username: &'r str,
+    password1: &'r str,
+    password2: &'r str,
+}
+
 #[get("/login")]
 pub fn login_page(flash: Option<FlashMessage<'_>>) -> Template {
     let mut context = Context::new();
-    //let mut context: HashMap<&str, &str> = HashMap::new();
 
     if let Some(ref f) = flash {
         context.parse_flash(f); 
     };
 
     Template::render("login", &context)
+}
+
+#[get("/signup")]
+pub fn signup_page(flash: Option<FlashMessage<'_>>) -> Template {
+    let mut context = Context::new();
+
+    if let Some(ref f) = flash {
+        context.parse_flash(f); 
+    };
+
+    Template::render("signup", &context)
+}
+
+
+
+#[post("/signup", data= "<form>")]
+pub async fn signup(form: Form<Strict<SignupForm<'_>>>, conn: Db) -> Flash<Redirect> {
+
+    if let Err(e) = check_email(form.email.to_string(), &conn).await {
+        Flash::warning(Redirect::to(uri!(signup)), e)
+    } else if (form.password1 != form.password2) {
+        Flash::warning(Redirect::to(uri!(signup)), "Passwords do not match")
+    } else if (check_username(form.username.to_string(), &conn)).await {
+        Flash::warning(Redirect::to(uri!(signup)), "Username already taken")
+    } else {
+        let mail = form.email.to_string();
+        let uname = form.username.to_string();
+        let password = form.password1.to_string();
+
+        match conn.run(move |c| {
+            diesel::insert_into(users::table)
+                .values(NewUser::new(uname.as_ref(), 
+                                     mail.as_ref(), 
+                                     password.as_ref(), 
+                                     false, true))
+                .execute(c)
+        }).await {
+            Ok(_) => {
+                Flash::warning(Redirect::to(uri!(login_page)), "Account successfully created")
+            },
+            Err(e) => {
+                Flash::warning(Redirect::to(uri!(login_page)), 
+                               format!("Unable to create account: {}", e))
+            }
+        }
+
+    }
 }
 
 #[post("/login", data = "<form>")]
@@ -104,4 +200,16 @@ pub async fn login(form: Form<Strict<LoginForm<'_>>>, cookies: &CookieJar<'_>, c
 pub fn logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
     cookies.remove_private(Cookie::named(super::USER_SESSION_NAME));
     Flash::success(Redirect::to(uri!(login)), "Successfully logged out.")
+}
+
+#[get("/username/<username>")]
+pub async fn username_available(username: &str, conn: Db) -> Value {
+    let taken: bool = check_username(username.to_string(), &conn).await;
+    if taken {
+        json!({"status": "error", "message": "Username already taken"})
+    } else if username.len() < 1 {
+        json!({"status": "error", "message": "Username too short"})
+    } else {
+        json!({"status": "ok", "message": "Username available"})
+    }
 }
