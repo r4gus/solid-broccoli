@@ -127,6 +127,7 @@
                                  value="{{ user.last_name }}">
                         </div>
                         <button type="submit" class="btn btn-primary">Update</button>
+                        <div class="mt-2" id="profileMsg"></div>
                     </form>
                 </div>
             </div>
@@ -157,6 +158,7 @@
                             <label for="floatingPassword">Old Password</label>
                         </div>
                         <button type="submit" class="btn btn-primary">Update Password</button>
+                        <div class="mt-2" id="passwordMsg"></div>
                     </form>
                 </div>
             </div>
@@ -186,14 +188,14 @@
             </div>
         </div>
 
-        <div class="mt-4" id="resultProfile">
-        </div>
     </div>
   </div>
 </div>
 
 
 
+<div class="mt-4" id="resultProfile">
+</div>
 
 {% endif %}
 

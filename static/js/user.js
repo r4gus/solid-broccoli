@@ -14,6 +14,19 @@ $( document ).ready( () => {
             });
         }, deltaT);
     }
+
+    function show_simple_message(head, body, color, target, deltaT = 3000) {
+        const $msg = $(`<div><strong>${head}</strong> ${body}<div>`);
+        $msg.css('color', color);
+
+        $( target ).prepend($msg);
+
+        setTimeout(function() {
+            $msg.fadeOut( "slow", function() {
+                $msg.remove();    
+            });
+        }, deltaT);
+    }
     
     $( "#profileForm" ).submit(function( event ) {
 
@@ -22,11 +35,12 @@ $( document ).ready( () => {
         
         // Cache form for reuse
         let $form = $(this);
+        let $msg = $( "#profileMsg" );
         
         const $email = $("input[name='email']", this);
         
         if (!validateEmail($email.val())) {
-            show_message("Warning", "Invalid E-Mail", "warning");        
+            show_simple_message("Warning:", "The given email is invalid", "yellow", "#profileMsg");        
             return false;
         }
 
@@ -44,10 +58,10 @@ $( document ).ready( () => {
             if (json['status'] === 'ok') {
                 show_message("Success", json['message'], "success");        
             } else {
-                show_message("Warning", json['message'], "warning");        
+                show_simple_message("Warning:", json['message'], "yellow", "#profileMsg");        
             }
         }).fail( (xhr, status, error) => {
-            show_message("Error", "Unable to process request", "danger");        
+            show_simple_message("Error:", "Unable to process request", "red", "#profileMsg");
         })
     });
 
@@ -70,13 +84,14 @@ $( document ).ready( () => {
             dataType : "json",
         }).done( (json) => {
             if (json['status'] === 'ok') {
-                show_message("Success", json['message'], "success");        
+                show_message("Success", json['message'], "success");
+                $form.find( "input" ).val("");
             } else {
-                show_message("Warning", json['message'], "warning");        
+                show_simple_message("Warning:", json['message'], "yellow", "#passwordMsg");        
             }
             $result.text(json['message']);
         }).fail( (xhr, status, error) => {
-            show_message("Error", "Unable to process request", "danger");        
+            show_simple_message("Error:", "Unable to process request", "red", "#passwordMsg");
         })
     });
 

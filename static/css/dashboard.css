@@ -16,3 +16,10 @@ main {
   overflow-x: auto;
   overflow-y: hidden;
 }
+
+#resultProfile {
+    position: absolute !important;
+    bottom: 10px;
+    right: 20px;
+    width: 360px;
+}
