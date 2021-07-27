@@ -57,9 +57,9 @@ async fn check_email(email: String, conn: &Db) -> Result<(), String> {
             .get_result::<User>(c)
     }).await.is_ok();
 
-    if (!validate_email(&cpy)) {
+    if !validate_email(&cpy) {
         Err(String::from("Malformed email address"))
-    } else if (taken) {
+    } else if taken {
         Err(String::from("Email address already taken"))
     } else {
         Ok(())
@@ -75,6 +75,18 @@ async fn check_username(username: String, conn: &Db) -> bool {
     }).await.is_ok();
 
     return taken;
+}
+
+pub fn check_password(pw1: &str, pw2: &str) -> Result<(), String> {
+    const PW_MIN_SIZE: usize = 5;
+    
+    if pw1.len() < PW_MIN_SIZE {
+        Err(format!("Password too short. At least {} chars required", PW_MIN_SIZE))
+    } else if pw1 != pw2 {
+        Err(String::from("Passwords do not match"))
+    } else {
+        Ok(())
+    }
 }
 
 #[derive(Debug, FromForm)]
@@ -120,9 +132,9 @@ pub async fn signup(form: Form<Strict<SignupForm<'_>>>, conn: Db) -> Flash<Redir
 
     if let Err(e) = check_email(form.email.to_string(), &conn).await {
         Flash::warning(Redirect::to(uri!(signup)), e)
-    } else if (form.password1 != form.password2) {
-        Flash::warning(Redirect::to(uri!(signup)), "Passwords do not match")
-    } else if (check_username(form.username.to_string(), &conn)).await {
+    } else if let Err(e) = check_password(form.password1, form.password2) {
+        Flash::warning(Redirect::to(uri!(signup)), e)
+    } else if check_username(form.username.to_string(), &conn).await {
         Flash::warning(Redirect::to(uri!(signup)), "Username already taken")
     } else {
         let mail = form.email.to_string();
@@ -212,4 +224,29 @@ pub async fn username_available(username: &str, conn: Db) -> Value {
     } else {
         json!({"status": "ok", "message": "Username available"})
     }
+}
+
+#[get("/email/<email>")]
+pub async fn email_available(email: &str, conn: Db) -> Value {
+    if let Err(e) = check_email(email.to_string(), &conn).await {
+        json!({"status": "error", "message": e})
+    } else {
+        json!({"status": "ok", "message": "Email available"})
+    }
+}
+
+#[derive(Debug, FromForm)]
+pub struct PwForm<'r> {
+    pw1: &'r str,
+    pw2: &'r str,
+}
+
+#[post("/password", data = "<form>")]
+pub fn password_valid(form: Form<Strict<PwForm<'_>>>) -> Value {
+    if let Err(e) = check_password(form.pw1, form.pw2) {
+        json!({"status": "error", "message": e})
+    } else {
+        json!({"status": "ok", "message": ""})
+    }
+
 }

@@ -73,7 +73,8 @@ fn rocket() -> _ {
     rocket::build()
         .mount("/", routes![auth::login_page, auth::login, auth::logout, 
                app::dashboard, app::dashboard_forward, auth::signup_page,
-               auth::signup, auth::username_available])
+               auth::signup, auth::username_available, auth::email_available,
+               auth::password_valid])
         .mount("/api/user", routes![api::user::update_user, 
                api::user::update_user_pw, api::user::delete_user])
         // Serve static files relative to the crates root.

@@ -1,4 +1,19 @@
 $( document ).ready( () => {
+
+    function show_message(head, body, type, deltaT = 10000) {
+        const $msg = $(`<div class="alert alert-dismissible alert-${type}">
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          <strong>${head}</strong>: ${body}
+        </div>`);
+
+        $( "#resultProfile" ).prepend($msg);
+
+        setTimeout(function() {
+            $msg.fadeOut( "slow", function() {
+                $msg.remove();    
+            });
+        }, deltaT);
+    }
     
     $( "#profileForm" ).submit(function( event ) {
 
@@ -8,14 +23,10 @@ $( document ).ready( () => {
         // Cache form for reuse
         let $form = $(this);
         
-        // Paragraph to show result message
-        const $result = $("#resultProfile");
-
         const $email = $("input[name='email']", this);
         
         if (!validateEmail($email.val())) {
-            $result.text("Invalid E-Mail");
-            $result.css("color", "red");
+            show_message("Warning", "Invalid E-Mail", "warning");        
             return false;
         }
 
@@ -30,17 +41,13 @@ $( document ).ready( () => {
 
             dataType : "json",
         }).done( (json) => {
-            console.log(json);
-
             if (json['status'] === 'ok') {
-                $result.css("color", "green");
+                show_message("Success", json['message'], "success");        
             } else {
-                $result.css("color", "red");
+                show_message("Warning", json['message'], "warning");        
             }
-            $result.text(json['message']);
         }).fail( (xhr, status, error) => {
-            $result.text("Ooops... something went wrong");
-            $result.css("color", "red");
+            show_message("Error", "Unable to process request", "danger");        
         })
     });
 
@@ -50,9 +57,6 @@ $( document ).ready( () => {
         
         // Cache form for reuse
         let $form = $(this);
-
-        // Paragraph to show result message
-        const $result = $("#resultProfile");
 
         $.ajax({
             // The URL fro the request
@@ -65,17 +69,14 @@ $( document ).ready( () => {
 
             dataType : "json",
         }).done( (json) => {
-            console.log(json);
-
             if (json['status'] === 'ok') {
-                $result.css("color", "green");
+                show_message("Success", json['message'], "success");        
             } else {
-                $result.css("color", "red");
+                show_message("Warning", json['message'], "warning");        
             }
             $result.text(json['message']);
         }).fail( (xhr, status, error) => {
-            $result.text("Ooops... something went wrong");
-            $result.css("color", "red");
+            show_message("Error", "Unable to process request", "danger");        
         })
     });
 

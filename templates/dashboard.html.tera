@@ -1,5 +1,11 @@
 {% extends "base" %}
 {% block title %}Dashboard{% endblock title %}
+{% block head %}
+    {{ super() }}
+    <link href="/static/css/dashboard.css" rel="stylesheet">
+{% endblock head %}
+{% block aside %}
+{% endblock %}
 {% block content %}
 <div class="py-4">
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
@@ -79,109 +85,116 @@
   </div>
 
 {% if user %}
-<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasProfile" aria-labelledby="offcanvasProfile">
+<div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasProfile" aria-labelledby="offcanvasProfile">
   <div class="offcanvas-header">
     <h5 class="offcanvas-title" id="offcanvasWithBackdropLabel">Profile</h5>
     <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
   <div class="offcanvas-body">
     <div data-bs-spy="scroll">
-    <p id="resultProfile"></p>
+
     
-    <div class="accordion accordion-flush" id="profileAccordion">
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="flush-headingProfile">
-              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
-                      data-bs-target="#flush-collapseOne" aria-expanded="false" 
-                      aria-controls="flush-collapseOne">
-                User
-              </button>
-            </h2>
-            <div id="flush-collapseOne" class="accordion-collapse collapse p-2" 
-                 aria-labelledby="flush-headingProfile" data-bs-parent="#profileAccordion">
-                <form action="/api/user/update/{{ user.id }}" method="post" id="profileForm">
-                    <div class="input-group mb-2">
-                      <span class="input-group-text">Username</span>
-                      <input type="text" name="username" aria-label="Username"
-                             class="form-control" value="{{ user.username }}" required>
-                    </div>
-                    <div class="input-group mb-2">
-                      <span class="input-group-text">E-Mail</span>
-                      <input type="text" name="email" aria-label="email"
-                             class="form-control" value="{{ user.email }}" required>
-                    </div>
-                    <div class="input-group mb-2">
-                      <span class="input-group-text">First name</span>
-                      <input type="text" name="first_name" aria-label="First name" class="form-control" 
-                             value="{{ user.first_name }}">
-                    </div>
-                    <div class="input-group mb-2">
-                      <span class="input-group-text">Last name</span>
-                      <input type="text" name="last_name" aria-label="Last name" class="form-control" 
-                             value="{{ user.last_name }}">
-                    </div>
-                    <button type="submit" class="btn btn-primary">Update</button>
-                </form>
+        <div class="accordion accordion-flush" id="profileAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="flush-headingProfile">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                          data-bs-target="#flush-collapseOne" aria-expanded="false" 
+                          aria-controls="flush-collapseOne">
+                    User
+                  </button>
+                </h2>
+                <div id="flush-collapseOne" class="accordion-collapse collapse p-2" 
+                     aria-labelledby="flush-headingProfile" data-bs-parent="#profileAccordion">
+                    <form action="/api/user/update/{{ user.id }}" method="post" id="profileForm">
+                        <div class="input-group mb-2">
+                          <span class="input-group-text">Username</span>
+                          <input type="text" name="username" aria-label="Username"
+                                 class="form-control" value="{{ user.username }}" required>
+                        </div>
+                        <div class="input-group mb-2">
+                          <span class="input-group-text">E-Mail</span>
+                          <input type="text" name="email" aria-label="email"
+                                 class="form-control" value="{{ user.email }}" required>
+                        </div>
+                        <div class="input-group mb-2">
+                          <span class="input-group-text">First name</span>
+                          <input type="text" name="first_name" aria-label="First name" class="form-control" 
+                                 value="{{ user.first_name }}">
+                        </div>
+                        <div class="input-group mb-2">
+                          <span class="input-group-text">Last name</span>
+                          <input type="text" name="last_name" aria-label="Last name" class="form-control" 
+                                 value="{{ user.last_name }}">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    </form>
+                </div>
             </div>
-        </div>
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="flush-headingProfilePassword">
-              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
-                      data-bs-target="#flush-collapseTwo" aria-expanded="false" 
-                      aria-controls="flush-collapseTwo">
-                Password
-              </button>
-            </h2>
-            <div id="flush-collapseTwo" class="accordion-collapse collapse p-2" 
-                 aria-labelledby="flush-headingProfilePassword" data-bs-parent="#profileAccordion">
-                <form action="/api/user/update/password/{{ user.id }}" method="post" id="passwordForm">
-                    <div class="form-floating mb-2">
-                        <input type="password" name="password1" class="form-control" id="floatingPassword1" 
-                            placeholder="Password" style="" autocomplete="off" required>
-                        <label for="floatingPassword">New Password</label>
-                    </div>
-                    <div class="form-floating mb-2">
-                        <input type="password" name="password2" class="form-control" id="floatingPassword2" 
-                            placeholder="Repeat Password" style="" autocomplete="off"required>
-                        <label for="floatingPassword">Repeat New Password</label>
-                    </div>
-                    <div class="form-floating mb-2">
-                        <input type="password" name="old" class="form-control" id="floatingPassword3" 
-                            placeholder="Old Password" style="" autocomplete="off" required>
-                        <label for="floatingPassword">Old Password</label>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Update Password</button>
-                </form>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="flush-headingProfilePassword">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                          data-bs-target="#flush-collapseTwo" aria-expanded="false" 
+                          aria-controls="flush-collapseTwo">
+                    Password
+                  </button>
+                </h2>
+                <div id="flush-collapseTwo" class="accordion-collapse collapse p-2" 
+                     aria-labelledby="flush-headingProfilePassword" data-bs-parent="#profileAccordion">
+                    <form action="/api/user/update/password/{{ user.id }}" method="post" id="passwordForm">
+                        <div class="form-floating mb-2">
+                            <input type="password" name="password1" class="form-control" id="floatingPassword1" 
+                                placeholder="Password" style="" autocomplete="off" required>
+                            <label for="floatingPassword">New Password</label>
+                        </div>
+                        <div class="form-floating mb-2">
+                            <input type="password" name="password2" class="form-control" id="floatingPassword2" 
+                                placeholder="Repeat Password" style="" autocomplete="off"required>
+                            <label for="floatingPassword">Repeat New Password</label>
+                        </div>
+                        <div class="form-floating mb-2">
+                            <input type="password" name="old" class="form-control" id="floatingPassword3" 
+                                placeholder="Old Password" style="" autocomplete="off" required>
+                            <label for="floatingPassword">Old Password</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Password</button>
+                    </form>
+                </div>
             </div>
-        </div>
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="flush-headingAdvanced">
-              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
-                      data-bs-target="#flush-collapseThree" aria-expanded="false" 
-                      aria-controls="flush-collapseThree">
-                Advanced Settings
-              </button>
-            </h2>
-            <div id="flush-collapseThree" class="accordion-collapse collapse p-2" 
-                 aria-labelledby="flush-headingProfilePassword" data-bs-parent="#profileAccordion">
-                <h5>Delete Account</h5>
-                <p>Deleting your account is an irreversible action. If you want to leave us enter your username below and the press the delete button.</p>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="flush-headingAdvanced">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                          data-bs-target="#flush-collapseThree" aria-expanded="false" 
+                          aria-controls="flush-collapseThree">
+                    Advanced Settings
+                  </button>
+                </h2>
+                <div id="flush-collapseThree" class="accordion-collapse collapse p-2" 
+                     aria-labelledby="flush-headingProfilePassword" data-bs-parent="#profileAccordion">
+                    <h5>Delete Account</h5>
+                    <p>Deleting your account is an irreversible action. If you want to leave us enter your username below and the press the delete button.</p>
 
-                <input type="text" class="form-control mb-2" id="delteConfirmation" 
-                    placeholder="{{ user.username }}" style="" autocomplete="off">
+                    <input type="text" class="form-control mb-2" id="delteConfirmation" 
+                        placeholder="{{ user.username }}" style="" autocomplete="off">
 
-                <form action="/api/user/delete/{{ user.id }}" method="post" id="userDeleteForm">
-                    <button type="submit" id="deleteUserBtn" class="btn btn-outline-danger" 
-                            disabled>
-                        Delete Account
-                    </button>
-                </form>
+                    <form action="/api/user/delete/{{ user.id }}" method="post" id="userDeleteForm">
+                        <button type="submit" id="deleteUserBtn" class="btn btn-outline-danger" 
+                                disabled>
+                            Delete Account
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
+
+        <div class="mt-4" id="resultProfile">
+        </div>
     </div>
   </div>
 </div>
+
+
+
+
 {% endif %}
 
 <script src="static/js/user.js"></script>

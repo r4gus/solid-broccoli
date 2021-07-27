@@ -219,7 +219,7 @@ fn update_password() {
             .cookie(session_cookie.clone())
             .dispatch();
         let strresp = response.into_string().unwrap();
-        assert!(strresp.contains("Passwords don't match"));
+        assert!(strresp.contains("Passwords do not match"));
 
         // Password is too short
         let response = client.post(uri!("/api/user", api::user::update_user_pw(id = max.id)))

@@ -2,7 +2,7 @@ use rocket::form::{Form, Strict};
 use rocket::serde::{Deserialize, Serialize, json::{Json, json, Value}};
 use regex::Regex;
 use argon2;
-use crate::auth::{generate_salt, validate_email};
+use crate::auth::{generate_salt, validate_email, check_password};
 use rocket::response::{Flash, Redirect};
 use crate::USER_SESSION_NAME;
 use rocket::http::{Cookie, CookieJar};
@@ -71,8 +71,6 @@ pub async fn update_user(user: &User, id: i32, form: Form<Strict<UserUpdateForm<
 /// Update the password of an user.
 #[post("/update/password/<id>", data = "<form>")]
 pub async fn update_user_pw(user: &User, id: i32, form: Form<Strict<UserUpdatePwForm<'_>>>, conn: Db) -> Value {
-    const PW_MIN_SIZE: usize = 5;
-    
     // Verify user via submitted password
     let matches = match argon2::verify_encoded(&user.password_hash, form.old.as_ref()) {
         Ok(matches) => matches,
@@ -84,13 +82,8 @@ pub async fn update_user_pw(user: &User, id: i32, form: Form<Strict<UserUpdatePw
 
     if (id != user.id || !matches) {
         json!({"status": "error", "message": "Unauthorized request"})
-    } else if (form.password1 != form.password2) {
-        json!({"status": "error", "message": "Passwords don't match"})
-    } else if (form.password1.len() < PW_MIN_SIZE) {
-        json!({
-            "status": "error", 
-            "message": format!("Password too short. At least {} chars required", PW_MIN_SIZE)
-        })
+    } else if let Err(e) = check_password(form.password1, form.password2) {
+        json!({"status": "error", "message": e})
     } else {
         // Generate new salted password hash from submitted password.
         let password_hash = argon2::hash_encoded(

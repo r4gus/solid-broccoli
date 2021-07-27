@@ -18,29 +18,35 @@
             {% endif %}
 
             <div class="form-floating mb-2">
-                <input type="email" name="email" class="form-control" id="floatingInput" 
+                <input type="email" name="email" class="form-control is-invalid" id="email" 
                     placeholder="name@example.com" style="" autocomplete="off" required>
                 <label for="floatingInput">Email address</label>
+                <div clas="" id="emailFeedback"></div>
             </div>
             <div class="form-floating mb-2">
-                <input type="text" name="username" class="form-control" id="username" 
+                <input type="text" name="username" class="form-control is-invalid" id="username" 
                     placeholder="username" style="" autocomplete="off" required>
                 <label for="floatingInput2">Username</label>
-                <div clas="valid-feedback" id="usernameFeedback"></div>
+                <div clas="" id="usernameFeedback"></div>
             </div>
             <div class="form-floating mb-2">
-                <input type="password" name="password1" class="form-control" id="floatingPassword1" 
+                <input type="password" name="password1" class="form-control is-invalid" id="password1" 
                     placeholder="Password" style="" autocomplete="off" required>
                 <label for="floatingPassword1">Password</label>
             </div>
             <div class="form-floating mb-4">
-                <input type="password" name="password2" class="form-control" id="floatingPassword2" 
+                <input type="password" name="password2" class="form-control is-invalid" id="password2" 
                     placeholder="Repeat Password" style="" autocomplete="off" required>
                 <label for="floatingPassword2">Repeat password</label>
+                <div clas="" id="passwordFeedback"></div>
             </div>
 
-            <button class="w-100 btn btn-lg btn-primary" type="submit">Sign Up</button>
+            <button id="submitBtn" class="w-100 btn btn-lg btn-primary mb-2" 
+                    type="submit" disabled>
+                Sign Up
+            </button>
 
+            <p>Already registered? <a href="/login">sign in</a></p>
 
             <p class="mt-5 mb-3 text-muted">© 2021</p>
         </form>     

@@ -7,14 +7,20 @@
 
     <!-- Bootstrap CSS -->
     <link href="/static/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/base.css" rel="stylesheet">
     <script src="static/js/jquery-3.6.0.js"></script>    
+    <script src="https://kit.fontawesome.com/d2fe8659fe.js" crossorigin="anonymous"></script>
     {% block head %}
         <title>{% block title %}{% endblock title %} - Solid Broccoli</title>
     {% endblock head %}
   </head>
   <body>
+    
+    <div class="mr-2">
     {% block aside %}
+
     {% endblock %}
+    </div>
 
     <div class="container">
         {% block content %}
