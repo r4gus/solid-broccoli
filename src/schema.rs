@@ -1,4 +1,16 @@
 table! {
+    rms (id) {
+        id -> Int4,
+        reps -> Int4,
+        exercise -> Varchar,
+        weight -> Float8,
+        unit -> Varchar,
+        lifted -> Timestamp,
+        uid -> Int4,
+    }
+}
+
+table! {
     users (id) {
         id -> Int4,
         username -> Varchar,
@@ -16,3 +28,10 @@ table! {
         verified -> Bool,
     }
 }
+
+joinable!(rms -> users (uid));
+
+allow_tables_to_appear_in_same_query!(
+    rms,
+    users,
+);

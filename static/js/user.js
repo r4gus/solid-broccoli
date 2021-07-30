@@ -1,19 +1,7 @@
+window.misc = window.misc || {};
+
 $( document ).ready( () => {
 
-    function show_message(head, body, type, deltaT = 10000) {
-        const $msg = $(`<div class="alert alert-dismissible alert-${type}">
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          <strong>${head}</strong>: ${body}
-        </div>`);
-
-        $( "#resultProfile" ).prepend($msg);
-
-        setTimeout(function() {
-            $msg.fadeOut( "slow", function() {
-                $msg.remove();    
-            });
-        }, deltaT);
-    }
 
     function show_simple_message(head, body, color, target, deltaT = 3000) {
         const $msg = $(`<div><strong>${head}</strong> ${body}<div>`);
@@ -56,7 +44,7 @@ $( document ).ready( () => {
             dataType : "json",
         }).done( (json) => {
             if (json['status'] === 'ok') {
-                show_message("Success", json['message'], "success");        
+                misc.show_message("Success", json['message'], "success");        
             } else {
                 show_simple_message("Warning:", json['message'], "yellow", "#profileMsg");        
             }
@@ -84,12 +72,11 @@ $( document ).ready( () => {
             dataType : "json",
         }).done( (json) => {
             if (json['status'] === 'ok') {
-                show_message("Success", json['message'], "success");
+                misc.show_message("Success", json['message'], "success");
                 $form.find( "input" ).val("");
             } else {
-                show_simple_message("Warning:", json['message'], "yellow", "#passwordMsg");        
+                show_simple_message("Warning:", json['message'], "yellow", "#passwordMsg");
             }
-            $result.text(json['message']);
         }).fail( (xhr, status, error) => {
             show_simple_message("Error:", "Unable to process request", "red", "#passwordMsg");
         })

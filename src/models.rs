@@ -10,6 +10,7 @@ use rocket::{
 use crate::schema::*;
 use super::Db;
 use super::auth;
+use chrono::prelude::*;
 
 #[derive(Queryable, Serialize)]
 pub struct User {
@@ -112,6 +113,42 @@ impl NewUser {
             img_path: "".to_string(),
             is_admin: is_admin,
             verified: verified,
+        }
+    }
+}
+
+/// Rep Max struct.
+#[derive(Queryable)]
+pub struct Rm {
+    pub id: i32,
+    pub reps: i32,
+    pub exercise: String,
+    pub weight: f64,
+    pub unit: String,
+    pub lifted: chrono::NaiveDateTime,
+    pub uid: i32,
+}
+
+#[derive(Insertable)]
+#[table_name="rms"]
+pub struct NewRm {
+    pub reps: i32,
+    pub exercise: String,
+    pub weight: f64,
+    pub unit: String,
+    pub lifted: chrono::NaiveDateTime,
+    pub uid: i32,
+}
+
+impl NewRm {
+    pub fn new(reps: i32,  exercise: String, weight: f64, unit: String, uid: i32) -> NewRm {
+        NewRm {
+            reps,
+            exercise,
+            weight,
+            unit,
+            lifted: NaiveDateTime::from_timestamp(Utc::now().timestamp(), 0),
+            uid
         }
     }
 }

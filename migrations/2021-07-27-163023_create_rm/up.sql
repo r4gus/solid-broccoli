@@ -1,0 +1,11 @@
+-- Your SQL goes here
+CREATE TABLE rms (
+    id SERIAL PRIMARY KEY NOT NULL,
+    reps INTEGER NOT NULL,
+    exercise VARCHAR NOT NULL,
+    weight FLOAT NOT NULL,
+    unit VARCHAR NOT NULL,
+    lifted TIMESTAMP NOT NULL,
+    uid INTEGER NOT NULL,
+    FOREIGN KEY (uid) REFERENCES users(id) ON DELETE CASCADE
+);

@@ -46,6 +46,7 @@ fn teardown() {
     // Purge database
     let conn = establish_connection();
     diesel::delete(users::table).execute(&conn);
+    diesel::delete(rms::table).execute(&conn);
 }
 
 fn run_test<T>(test: T) -> ()
@@ -351,6 +352,50 @@ fn sign_up_test() {
 
         assert_eq!("r4gus", david.username);
         assert_eq!("david@example.de", david.email);
+    })
+}
+
+#[test]
+fn insert_rms() {
+    run_test(|| {
+        let conn = establish_connection();
+        let max = NewUser::new("maxi", "max@mustermann.de", b"secret", false, true);
+        let max: User = insert_test_user(&conn, &max);
+
+        let client = Client::tracked(rocket()).unwrap();
+
+        // Login and try to delte different user
+        let session_cookie = login(&client, &max.email, "secret").expect("logged in");
+
+        // Insert a new 1 rep max successfully
+        let response = client.post(uri!("/api/exercise/", api::exercise::insert_rm(id = max.id)))
+            .header(ContentType::Form)
+            .body(format!("reps={}&exercise={}&weight={}&unit={}", 
+                          "1", "Pull-Up", "20", "kg"))
+            .cookie(session_cookie.clone())
+            .dispatch();
+        let strresp = response.into_string().unwrap();
+        assert!(strresp.contains("1 rep max inserted successfully"));
+
+        // Insert a new 3 rep max successfully
+        let response = client.post(uri!("/api/exercise/", api::exercise::insert_rm(id = max.id)))
+            .header(ContentType::Form)
+            .body(format!("reps={}&exercise={}&weight={}&unit={}", 
+                          "3", "Pull-Up", "7.5", "kg"))
+            .cookie(session_cookie.clone())
+            .dispatch();
+        let strresp = response.into_string().unwrap();
+        assert!(strresp.contains("3 rep max inserted successfully"));
+
+        // Insert a new 3 rep max successfully
+        let response = client.post(uri!("/api/exercise/", api::exercise::insert_rm(id = max.id)))
+            .header(ContentType::Form)
+            .body(format!("reps={}&exercise={}&weight={}&unit={}", 
+                          "10", "Pull-Up", "0", "kg"))
+            .cookie(session_cookie.clone())
+            .dispatch();
+        let strresp = response.into_string().unwrap();
+        assert!(strresp.contains("10 rep max inserted successfully"));
     })
 }
 

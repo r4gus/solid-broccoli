@@ -3,6 +3,7 @@
 #[macro_use] extern crate diesel_migrations;
 #[macro_use] extern crate diesel;
 #[macro_use] extern crate regex;
+extern crate chrono;
 
 #[cfg(test)] mod test;
 
@@ -77,6 +78,8 @@ fn rocket() -> _ {
                auth::password_valid])
         .mount("/api/user", routes![api::user::update_user, 
                api::user::update_user_pw, api::user::delete_user])
+        .mount("/api/exercise", routes![api::exercise::insert_rm,
+        api::exercise::get_rms])
         // Serve static files relative to the crates root.
         .mount("/static", FileServer::from(relative!("static")))
         // Allow templates as return type
