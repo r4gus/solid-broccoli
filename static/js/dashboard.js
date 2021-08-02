@@ -15,7 +15,9 @@ $( document ).ready( () => {
             dataType: "json",
         }).done( (json) => {
             if (json['status'] === 'ok') {
-                misc.show_message("Success", json['message'], "success");        
+                misc.show_message("Success", json['message'], "success");
+                // update table
+                getRm($form.prop('action').split('/').pop());
             } else {
                 misc.show_message("Error", json['message'], "danger");        
             }
@@ -63,7 +65,7 @@ function buildTable(json) {
 
     $( "#rmTableWrapper" ).empty();
 
-    var html = '<table class="table table-striped" id="rmTable"><thead id="rmReps"><tr>';
+    var html = '<table class="table table-hover table-dark" id="rmTable"><thead id="rmReps"><tr>';
     html += '<th scope="col">Exercise</th>';
     reps.forEach( (val, idx, arr) => html+= `<th scope="col">${val} RM</th>` );
     html += '</thead><tbody id="rmBody">';

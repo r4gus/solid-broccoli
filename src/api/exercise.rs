@@ -58,6 +58,7 @@ pub async fn insert_rm(user: &User, id: i32, form: Form<Strict<RmForm<'_>>>, con
     }
 }
 
+/// Get all `n` rep max for the specified user.
 #[get("/rm/<id>")]
 pub async fn get_rms(user: &User, id: i32, conn: Db) -> 
     Result<Json<HashMap<String, HashMap<i32, Vec<RmStats>>>>, Value> {
@@ -69,6 +70,7 @@ pub async fn get_rms(user: &User, id: i32, conn: Db) ->
         let user_rms = conn.run(move |c| {
             rms::table
                 .filter(rms::uid.eq(id))
+                .order(rms::lifted.desc())
                 .load::<Rm>(c)
         }).await;
         

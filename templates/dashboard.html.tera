@@ -54,45 +54,52 @@
         </div>
     {% endif %}
 
+
     <div class="p-3 mb-4 bg-dark rounded-3">
       <div class="container-fluid ">
+        <h2 class="p-3">n rep max</h2>
         <form class="row g-3" action="/api/exercise/insert/rm/{{ user.id }}" 
               method="post" id="rmForm" >
-            <div class="col-md-2">
-                <label for="inputReps" class="form-label">Reps</label>
-                <select name="reps" id="inputReps" class="form-select" required>
-                  <option selected disabled value="">Reps</option>
-                  {% for a in range(start=1,end=11) %}
-                     <option>{{ a }}</option>
-                  {% endfor %}
-                </select>  
+            <div class="col-md-3">
+                <div class="input-group mb-2">
+                    <span for="inputReps" class="input-group-text">Reps</span>
+                    <select name="reps" id="inputReps" class="form-select" required>
+                      {% for a in range(start=1,end=11) %}
+                         <option>{{ a }}</option>
+                      {% endfor %}
+                    </select>  
+                </div>
             </div>
-            <div class="col-md-2">
-                <label for="inputExercise" class="form-label">Exercise</label>
-                <select name="exercise" id="inputExercise" class="form-select" required>
-                  <option selected disabled value="">Exercise</option>
-                     <option>Pull-Up</option>
-                     <option>Push-Up</option>
-                     <option>Air Squat</option>
-                     <option>Front Squat</option>
-                     <option>Overhead Squat</option>
-                     <option>Shoulder Press</option>
-                     <option>Push Press</option>
-                </select>  
+            <div class="col-md-3">
+                <div class="input-group mb-2">
+                    <span for="inputExercise" class="input-group-text">Exercise</span>
+                    <select name="exercise" id="inputExercise" class="form-select" required>
+                         <option selected>Pull-Up</option>
+                         <option>Push-Up</option>
+                         <option>Air Squat</option>
+                         <option>Front Squat</option>
+                         <option>Overhead Squat</option>
+                         <option>Shoulder Press</option>
+                         <option>Push Press</option>
+                    </select>  
+                </div>
             </div>
-            <div class="col-md-2">
-                <label for="inputWeight" class="form-label">Weight</label>
-                <input name="weight" type="text" class="form-control" id="inputWeight" required>
+            <div class="col-md-3">
+                <div class="input-group mb-2">
+                    <span for="inputWeight" class="input-group-text">Weight</span>
+                    <input name="weight" type="text" class="form-control" id="inputWeight" required>
+                </div>
             </div>
-            <div class="col-md-2">
-                <label for="inputUnit" class="form-label">Unit</label>
-                <select name="unit" id="inputUnit" class="form-select" required>
-                  <option selected disabled value="">Unit</option>
-                     <option>kg</option>
-                     <option>lbs</option>
-                </select>  
+            <div class="col-md-3">
+                <div class="input-group mb-2">
+                    <span for="inputUnit" class="input-group-text">Unit</span>
+                    <select name="unit" id="inputUnit" class="form-select" required>
+                         <option selected>kg</option>
+                         <option>lbs</option>
+                    </select>  
+                </div>
             </div>
-            <div class="col-12">
+            <div class="col-1">
                 <button class="btn btn-primary" type="submit" id="submitRm">
                     <i class="fas fa-plus"></i>
                 </button>
@@ -101,9 +108,6 @@
         <hr>
         <div class="table-responsive" id="rmTableWrapper">
         </div>
-        <h1 class="display-5 fw-bold">Custom jumbotron</h1>
-        <p class="col-md-8 fs-4">Using a series of utilities, you can create this jumbotron, just like the one in previous versions of Bootstrap. Check out the examples below for how you can remix and restyle it to your liking.</p>
-        <button class="btn btn-primary btn-lg" type="button" onClick="getRm({{ user.id }})">Example button</button>
       </div>
     </div>
 
@@ -247,4 +251,9 @@
 <script src="static/js/misc.js"></script>
 <script src="static/js/user.js"></script>
 <script src="static/js/dashboard.js"></script>
+<script>
+$( document ).ready( () => {
+    getRm({{ user.id }});
+});
+</script>
 {% endblock %}
